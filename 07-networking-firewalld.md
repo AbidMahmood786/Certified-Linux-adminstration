@@ -1,94 +1,89 @@
-# Chapter 7: Networking & Firewalld
-✅ CHAPTER 6 — Systemd & Service Management (RHCSA‑Focused)
+CHAPTER 7 — Networking & Firewalld (RHCSA Exam‑Focused)
 1. RHCSA Objectives
 
-Control system services using systemctl
-Understand systemd unit types
-Manage targets (multi‑user, graphical)
-Analyze logs using journalctl
-Enable/disable services
-Mask/unmask services
-Create or edit simple unit files
+Configure network interfaces using nmcli
+Set static IP, DNS, gateway
+Bring interfaces up/down
+Control firewall rules with firewalld
+Open/close ports and services
+Use zones and understand their purpose
+Verify connectivity with ping, ip, and ss
 
 
 2. Essential Commands
-systemctl start httpd
-systemctl stop firewalld
-systemctl restart sshd
-systemctl status crond
-systemctl enable --now cockpit.socket
-systemctl disable cups
-systemctl mask bluetooth
-systemctl unmask bluetooth
+Network Management
+nmcli device status
+nmcli connection show
+nmcli connection add
+nmcli connection modify
+nmcli connection up eth0
+ip a
+ping -c3 8.8.8.8
 
-Targets:
-systemctl get-default
-systemctl set-default multi-user.target
+Set Static IP
+nmcli connection modify eth0 ipv4.addresses 192.168.1.50/24
+nmcli connection modify eth0 ipv4.gateway 192.168.1.1
+nmcli connection modify eth0 ipv4.dns 8.8.8.8
+nmcli connection modify eth0 ipv4.method manual
+nmcli connection up eth0
 
-Logs:
-journalctl -u httpd
-journalctl -u sshd -xe
-journalctl --since "10 min ago"
+Firewalld
+firewall-cmd --state
+firewall-cmd --get-active-zones
+firewall-cmd --zone=public --add-service=http --permanent
+firewall-cmd --zone=public --add-port=8080/tcp --permanent
+firewall-cmd --reload
+firewall-cmd --list-all
+
+Check listening services
+ss -tlnp
 
 
 3. Fast Theory
 
+NetworkManager controls network interfaces in RHEL.
+nmcli is the main RHCSA exam tool for network config.
+IP assignment methods:
 
-systemd manages:
-
-Services
-Sockets
-Mounts
-Targets
-
+manual → static
+auto → DHCP
 
 
-Common Unit Types:
+Firewalld uses:
 
-.service
-.socket
-.mount
-.target
-
+Zones (public, home, internal)
+Services (http, ssh, samba)
+Ports (8080/tcp)
 
 
-systemctl enable creates symlink for auto‑start
-
-
-systemctl mask prevents manual and automatic start
-
-
-Logs are stored in binary format by journald
-
-Viewed using journalctl
-
-
+Permanent changes require --permanent + reload.
 
 
 4. RHCSA Labs
-Lab 1 — Start/Stop Services
-systemctl start httpd
-systemctl status httpd
-systemctl stop httpd
+Lab 1 — Set Static IP
+nmcli connection modify eth0 ipv4.addresses 10.10.0.50/24
+nmcli connection modify eth0 ipv4.gateway 10.10.0.1
+nmcli connection modify eth0 ipv4.dns 1.1.1.1
+nmcli connection modify eth0 ipv4.method manual
+nmcli connection down eth0
+nmcli connection up eth0
+
+Validate:
+ip a, ping -c3 10.10.0.1
+
+Lab 2 — Configure Firewalld for HTTP
+firewall-cmd --zone=public --add-service=http --permanent
+firewall-cmd --reload
+firewall-cmd --list-services
 
 
-Lab 2 — Enable Service on Boot
-systemctl enable --now sshd
+Lab 3 — Open Custom Port 8080
+firewall-cmd --add-port=8080/tcp --permanent
+firewall-cmd --reload
 
 
-Lab 3 — Check and Change Default Target
-systemctl get-default
-systemctl set-default multi-user.target
-
-
-Lab 4 — Service Logs
-journalctl -u sshd
-journalctl -xe
-
-
-Lab 5 — Mask a Service
-systemctl mask cups
-systemctl unmask cups
+Lab 4 — Verify Listening Services
+ss -tlnp
 
 
 5. Troubleshooting
@@ -117,48 +112,42 @@ systemctl unmask cups
 
 
 
-IssueReasonFixService won’t startBad config filejournalctl -u serviceFails at bootMissing enablesystemctl enable serviceService starts unexpectedlyEnabled or socket activatedsystemctl disable, check .socket
+
+
+
+
+
+IssueDiagnosticFixCan't reach networkip a, nmcli dev statusInterface down or wrong IPDNS problemscat /etc/resolv.confUpdate DNS via nmcliPorts blockedfirewall-cmd --list-allAdd service/portService listening but unreachabless -tlnpFirewall not configured
 
 6. MCQs
 
 
-To start a service immediately:
-A) service start service
-B) sysctl service start
-C) systemctl start service
-D) initctl start
+Which command shows network interfaces?
+A) ifconfig B) netstat C) ip a D) lsnet
 Answer: C
 
 
-To check logs for sshd:
-A) logs sshd
-B) journalctl -u sshd
-C) systemctl log sshd
-D) view ssh logs
-Answer: B
-
-
-Masking a service:
-A) Stops it
-B) Prevents all starting methods
-C) Deletes it
-D) Hides config
-Answer: B
-
-
-Change default target:
-A) systemctl target set
-B) systemctl set-default
-C) systemctl change target
-D) initctl default
-Answer: B
-
-
-Which unit type describes system services?
-A) .mount
-B) .socket
-C) .service
-D) .target
+To set static IP, set ipv4.method to:
+A) default B) static C) manual D) custom
 Answer: C
 
 
+To allow HTTP service:
+A) firewall-cmd --add http
+B) firewall-cmd --add-service=http
+C) firewall-cmd add service
+D) systemctl allow http
+Answer: B
+
+
+To list all firewall rules:
+A) firewall-cmd --show
+B) firewall-cmd --view
+C) firewall-cmd --list-all
+D) firewall-cmd --all
+Answer: C
+
+
+Which tool configures networking in RHEL?
+A) ifconfig B) netctl C) nmcli D) netadm
+Answer: C
